@@ -1,0 +1,13 @@
+1d621ded2ec628aeb389805eb3693436 *DESCRIPTION
+54f99781ef1ce42fd8d682598b96f389 *NAMESPACE
+40eef03caa94968c38377764ef62b236 *R/add_pval_ggplot.R
+e12dd9a419f9c8ab1870389790725568 *build/vignette.rds
+430d4e5ca1c78aabd440c444f4ddad8d *inst/doc/ggpval.R
+abde293eed6b3dda8c88297ffc56be03 *inst/doc/ggpval.Rmd
+fe086e7d5d2fee072675979c5db4b964 *inst/doc/ggpval.html
+6911df93175ce7b60f2b16a9bec3001a *inst/image/README-unnamed-chunk-3-1.png
+35efefc06e2ba9ac44d4912d067ae83c *inst/image/README-unnamed-chunk-4-1.png
+05e7c19bdd53cdca49b53ce57bfa2140 *inst/image/README-unnamed-chunk-5-1.png
+fb5d9a3da42ed894d5d1c998082d6d44 *man/add_pval.Rd
+7726a7be706c463dd24f59c8b789d5a5 *tests/test-add_pval.R
+abde293eed6b3dda8c88297ffc56be03 *vignettes/ggpval.Rmd
