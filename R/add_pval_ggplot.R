@@ -40,6 +40,32 @@ format_pval <- function(pval){
   pval
 }
 
+# Function to infer response variable
+infer_response <- function(ggplot_obj){
+  get_y <- function(mapping){
+    get_in_parenthesis(strsplit(as.character(mapping)[2],'->')$y)
+  }
+  dt <- data.table(ggplot_obj$data)
+  # Find the layer with raw data
+  mapping <- ggplot_obj$mapping
+  response <- get_y(mapping)
+  # Check for other layers
+  maps <- lapply(ggplot_obj$layers, function(i) i$mapping)
+  maps <- maps[!sapply(maps, is.null)]
+  y <- sapply(maps, get_y)
+  if (length(y) == 1 & (y[1] %in% names(dt))){
+    if (is.numeric(dt[, get(y)]) & (length(table(dt[, get(y)])) > length(table(dt[, get(response)])))){
+      response <- y
+      #warning(paste("The inference of raw data column for statistical testing being", response, "might not correct."))
+    }
+  }else{
+    if (length(y) > 1){
+      #warning(paste("The inference of raw data column for statistical testing being", response, "might not correct."))
+    }
+  }
+  response
+}
+
 #' Add p-values to ggplot objects.
 #'
 #' @param ggplot_obj ggplot object
@@ -48,12 +74,16 @@ format_pval <- function(pval){
 #' @param test character of statistical testing method. e.g. t.test, wilcox.test. Default wilcox.test
 #' @param heights integer or vector of integers. The heights of the p-value/annotation. Default maximum value from the data
 #' @param barheight tip bar height of the annotation. Default calculated by range_y / 20
-#' @param testsize p-value/annotation text size
+#' @param textsize p-value/annotation text size
 #' @param pval_text_adj distance of p-value/annotation from annotation bar. Default barheight/2
 #' @param annotation text to annotate. If specified, statistical test will not be done
 #' @param log whether y axis is log transformed. Default FALSE
 #' @param pval_star whether transform pval numbers to stars
 #' @param fold_change whether also compute and show fold changes. Default FALSE.
+#' @param parse_text whether parse the annotation text (NULL, TRUE, FALSE). If NULL, p-values will be parsed,
+#'  text annotations will not. Default NULL.
+#' @param response the column that contains the data for statistical testing. Default infer from ggplot object.
+#' @param ... additional arguments for statistical testing function (e.g. alternative = "less").
 #'
 #' @import data.table
 #' @import stats
@@ -72,15 +102,25 @@ format_pval <- function(pval){
 
 add_pval <- function(ggplot_obj,
                      pairs=list(c(1,2),c(1,3)),
-                     test='wilcox.test',
+                     test="wilcox.test",
                      heights=NULL,
                      barheight=NULL,
-                     testsize=5,
+                     textsize=5,
                      pval_text_adj=NULL,
                      annotation=NULL,
                      log=FALSE,
                      pval_star=FALSE,
-                     fold_change=FALSE){
+                     fold_change=FALSE,
+                     parse_text=NULL,
+                     response="infer",
+                     ...){
+  if (is.null(parse_text)){
+    if (is.null(annotation)){
+      parse_text <- TRUE
+    }else{
+      parse_text <- FALSE
+    }
+  }
   facet <- NULL
   if (class(ggplot_obj$facet)[1] != 'null'){
     if (class(ggplot_obj$facet)[1] == "FacetGrid"){
@@ -96,16 +136,23 @@ add_pval <- function(ggplot_obj,
   }
   ggplot_obj$data <- data.table(ggplot_obj$data)
   ggplot_obj$data$group <- ggplot_obj$data[ ,get(get_in_parenthesis(strsplit(as.character(ggplot_obj$mapping)[1],'->')$x))]
-  ggplot_obj$data$response <- ggplot_obj$data[ ,get(get_in_parenthesis(strsplit(as.character(ggplot_obj$mapping)[2],'->')$y))]
   ggplot_obj$data$group <- factor(ggplot_obj$data$group)
-  y_range <- layer_scales(ggplot_obj)$y$range$range
-  # infer heights to put bar
-  if (is.null(heights)){
-    heights <- y_range[2]
+  if (response == "infer"){
+    response_ <- infer_response(ggplot_obj)
+  }else{
+    response_ <- response
   }
+  ggplot_obj$data$response <- ggplot_obj$data[ ,get(response_)]
+  y_range <- layer_scales(ggplot_obj)$y$range$range
+  n_facet <- length(unique(ggplot_obj$data[, eval(facet)]))
   # infer barheight of annotation,
   if (is.null(barheight)){
     barheight <- (y_range[2] - y_range[1]) / 20
+  }
+  # infer heights to put bar
+  if (is.null(heights)){
+    heights <- y_range[2] + barheight
+    heights <- rep(heights, length=length(pairs))
   }
   if (length(barheight) != length(pairs)){
     barheight <- rep(barheight, length=length(pairs))
@@ -116,6 +163,18 @@ add_pval <- function(ggplot_obj,
   }
   if (length(pval_text_adj) != length(pairs)){
     pval_text_adj <- rep(pval_text_adj, length=length(pairs))
+  }
+  if (!is.null(annotation)){
+    # check annotation input, if provided
+    if ((length(annotation) != length(pairs)) && length(annotation) != n_facet){
+      annotation <- rep(annotation, length = length(pairs))
+    }
+    if (is.list(annotation)){
+      if (length(annotation[[1]]) != length(pairs)){
+        annotation <- lapply(annotation, function(a) rep(a, length = length(pairs)))
+      }
+    }
+    annotation <- data.frame(annotation) # each row annotate each pair
   }
   # Scale barheight and pval_text_adj log
   if (log){
@@ -133,12 +192,17 @@ add_pval <- function(ggplot_obj,
     data_2_test <- ggplot_obj$data[ggplot_obj$data$group %in% test_groups,]
     # statistical test
     if (!is.null(facet)){
-      pval <- data_2_test[, lapply(.SD, function(i) get(test)(response ~ as.character(group))$p.value),
+      if (class(ggplot_obj$data[, eval(facet)]) != 'factor'){
+        facet_level <-levels(as.factor(ggplot_obj$data[, eval(facet)]))
+      }else{
+        facet_level <- levels(ggplot_obj$data[, eval(facet)])
+      }
+      pval <- data_2_test[, lapply(.SD, function(i) get(test)(response ~ as.character(group), ...)$p.value),
                           by=facet,
                           .SDcols=c('response','group')]
-      pval <- pval[, group]
+      pval <- pval[,facet := factor(facet, levels = facet_level)][order(facet), group]
     }else{
-      pval <- get(test)(data=data_2_test, response ~ group)$p.value
+      pval <- get(test)(data=data_2_test, response ~ group, ...)$p.value
       if (fold_change){
         fc <- data_2_test[, median(response), by = group][order(group)][, .SD[1] / .SD[2], .SDcols='V1'][ ,V1]
         fc <- paste0('FC=', round(fc, digits = 2))
@@ -154,26 +218,20 @@ add_pval <- function(ggplot_obj,
     height <- heights[i]
     df_path <- data.frame(group=rep(pairs[[i]], each=2),
                           response=c(height, height+barheight[i], height+barheight[i], height))
-    ggplot_obj <- ggplot_obj + geom_line(data=df_path, aes(x=group, y=response))
+    ggplot_obj <- ggplot_obj + geom_line(data=df_path, aes(x=group, y=response), inherit.aes = F)
+    # start annotation
     if (is.null(annotation)){ # assume annotate with p-value
       labels <- sapply(pval, function(i) deparse(format_pval(i)))
-      ggplot_obj <- ggplot_obj + annotate("text",
-                                          x = (pairs[[i]][1]+pairs[[i]][2])/2,
-                                          y = height+barheight[i]+pval_text_adj[i],
-                                          label = labels,
-                                          size = testsize,
-                                          parse=TRUE,
-                                          vjust="bottom")
     }else{
-      if (length(annotation) != length(pairs)){
-        annotation <- rep(annotation, length=length(pairs))
-      }
-      ggplot_obj <- ggplot_obj + annotate("text", x = (pairs[[i]][1]+pairs[[i]][2])/2,
-                                          y = height+barheight[i]+pval_text_adj[i],
-                                          label = annotation[i],
-                                          size = testsize,
-                                          vjust = "bottom")
+      labels <- unlist(annotation[i,])
     }
+    ggplot_obj <- ggplot_obj + annotate("text",
+                                        x = (pairs[[i]][1]+pairs[[i]][2])/2,
+                                        y = height+barheight[i]+pval_text_adj[i],
+                                        label = labels,
+                                        size = textsize,
+                                        parse=parse_text,
+                                        vjust="bottom")
   }
   ggplot_obj
 }
