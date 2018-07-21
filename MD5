@@ -1,11 +1,11 @@
-afac05f4f42b9f1aa9ed1670d8c7e107 *DESCRIPTION
+f7a984f44c92cf659a15ae0145d5579a *DESCRIPTION
 54f99781ef1ce42fd8d682598b96f389 *NAMESPACE
 3eabf3c651a17fd3ea317fbaa6ba19d8 *NEWS.md
-1daa59766bd6b4e53430c588e291359b *R/add_pval_ggplot.R
-7f19854878bc5250cb8f57dccfc15043 *build/vignette.rds
+5463a9af2c44586d356896e823ce66a2 *R/add_pval_ggplot.R
+ebc793fcf96848c9f31387883bdd4f56 *build/vignette.rds
 ccf38403da05702de294ce3ae57af56a *inst/doc/ggpval.R
 1c6dfc322d88d7f0641f84fdb8bdbaa5 *inst/doc/ggpval.Rmd
-13cb2d954dc16cab9670ab044ba9fa5a *inst/doc/ggpval.html
+ad5a6f8180421f79148019fce3155a1e *inst/doc/ggpval.html
 7e701b73514965d0a785c0e98fbac6e3 *inst/image/README-unnamed-chunk-3-1.png
 dcc3c45b676968750bfb25996594ef5e *inst/image/README-unnamed-chunk-4-1.png
 cdaaa60525806bb17875c70c48d86990 *inst/image/README-unnamed-chunk-5-1.png
@@ -13,5 +13,6 @@ cdaaa60525806bb17875c70c48d86990 *inst/image/README-unnamed-chunk-5-1.png
 0936b58a12156fc44f9767d49d2e560e *inst/image/README-unnamed-chunk-7-1.png
 2250d91af5aaec18977af891d475d28e *inst/image/README-unnamed-chunk-8-1.png
 387b3c93620ebf6e0b0c262231530817 *man/add_pval.Rd
-59b0e6edfb6751f20534a610d30b3393 *tests/test-add_pval.R
+d86c53369a3b2105aec4dedd800f8060 *tests/testthat.R
+0175fcb4087e3c450dd85d105f1efddd *tests/testthat/test-add_pval.R
 1c6dfc322d88d7f0641f84fdb8bdbaa5 *vignettes/ggpval.Rmd
