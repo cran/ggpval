@@ -56,7 +56,8 @@ add_pval(plt_bar, pairs = list(c(1, 2)), response = 'value')
 add_pval(plt_bar, pairs = list(c(1, 2)), 
          test = 't.test',
           alternative = "less",
-         response = 'value')
+         response = 'value',
+         pval_star = T)
 
 ## ---- echo=TRUE, results='asis'------------------------------------------
 add_pval(plt, pairs = list(c(1, 2)), annotation = "Awesome")
