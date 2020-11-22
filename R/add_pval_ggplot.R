@@ -27,7 +27,7 @@ fdr2star <- function(fdrs, alpha=0.1){
 }
 
 
-format_pval <- function(pval){
+format_pval <- function(pval, plotly=FALSE){
   if (is.character(pval)){
     # pval contains fold change
     pval <- strsplit(pval, ' ')[[1]]
@@ -37,11 +37,24 @@ format_pval <- function(pval){
     fc <- ""
   }
   pval <- format.pval(pval, digits = 2)
+  format_pval_(pval, fc, plotly=plotly)
+}
+
+format_pval_ <- function(pval, fc, plotly=FALSE){
   if (grepl("<", pval)){
-    pval <- gsub("< ?", "", pval)
-    pval <- bquote(italic(P) < .(paste(pval, fc)))
+    if (plotly){
+      pval <- paste('<i>P</i>', paste(pval, fc))
+    }
+    else {
+      pval <- gsub("< ?", "", pval)
+      pval <- deparse(bquote(italic(P) < .(paste(pval, fc))))
+    }
   }else{
-    pval <- bquote(italic(P) == .(paste(pval, fc)))
+    if (plotly){
+      pval <- paste('<i>P</i> =', paste(pval, fc))
+    }else{
+      pval <- deparse(bquote(italic(P) == .(paste(pval, fc))))
+    }
   }
   pval
 }
@@ -85,6 +98,7 @@ infer_response <- function(ggplot_obj){
 #' @param annotation text to annotate. If specified, statistical test will not be done
 #' @param log whether y axis is log transformed. Default FALSE
 #' @param pval_star whether transform pval numbers to stars
+#' @param plotly set to TRUE if wrap the plot with `ggploty`
 #' @param fold_change whether also compute and show fold changes. Default FALSE.
 #' @param parse_text whether parse the annotation text (NULL, TRUE, FALSE). If NULL, p-values will be parsed,
 #'  text annotations will not. Default NULL.
@@ -107,7 +121,7 @@ infer_response <- function(ggplot_obj){
 #' @export
 
 add_pval <- function(ggplot_obj,
-                     pairs=list(c(1,2),c(1,3)),
+                     pairs=NULL,
                      test="wilcox.test",
                      heights=NULL,
                      barheight=NULL,
@@ -116,10 +130,22 @@ add_pval <- function(ggplot_obj,
                      annotation=NULL,
                      log=FALSE,
                      pval_star=FALSE,
+                     plotly=FALSE,
                      fold_change=FALSE,
                      parse_text=NULL,
                      response="infer",
                      ...){
+
+  if(is.null(pairs)){
+    total_groups <- length(unique(ggplot_obj$data[[get_in_parenthesis(as.character(ggplot_obj$mapping[1]))]]))
+
+    if(total_groups==2){
+      pairs <- list(c(1,2))
+    } else {
+      pairs <- lapply(2:total_groups, function(x) c(1,x))
+    }
+  }
+
   if (is.null(parse_text)){
     if (is.null(annotation)){
       parse_text <- TRUE
@@ -129,6 +155,7 @@ add_pval <- function(ggplot_obj,
   }
   facet <- NULL
   n_facet <- 1
+  ggplot_obj$data <- data.table(ggplot_obj$data)
   if (class(ggplot_obj$facet)[1] != 'FacetNull'){
     if (class(ggplot_obj$facet)[1] == "FacetGrid"){
       facet <- c(names(ggplot_obj$facet$params$cols), names(ggplot_obj$facet$params$rows))
@@ -151,7 +178,7 @@ add_pval <- function(ggplot_obj,
       pairs <- rep_len(heights, length(pairs))
     }
   }
-  ggplot_obj$data <- data.table(ggplot_obj$data)
+
   ggplot_obj$data$group__ <- ggplot_obj$data[ ,get(get_in_parenthesis(as.character(ggplot_obj$mapping[1])))]
   ggplot_obj$data$group__ <- factor(ggplot_obj$data$group__)
   if (response == "infer"){
@@ -224,7 +251,7 @@ add_pval <- function(ggplot_obj,
     # convert pval to stars if needed
     if (pval_star & is.null(annotation)){
       pval <- pvars2star(pval)
-      annotation <- pval
+      annotation <- t(t(pval))
     }
     # make data from of label path, the annotation path for each facet is the same
     height <- heights[i]
@@ -233,9 +260,9 @@ add_pval <- function(ggplot_obj,
     ggplot_obj <- ggplot_obj + geom_line(data=df_path, aes(x=group__, y=response), inherit.aes = F)
     # start annotation
     if (is.null(annotation)){ # assume annotate with p-value
-      labels <- sapply(pval, function(i) deparse(format_pval(i)))
+      labels <- sapply(pval, function(i) format_pval(i, plotly))
     }else{
-      labels <- unlist(annotation[i])
+      labels <- unlist(annotation[i,])
     }
     # create a annotation data.frame
     if(is.null(facet)){
@@ -253,7 +280,7 @@ add_pval <- function(ggplot_obj,
     labs <- geom_text <- x <- y <- NULL
     ggplot_obj <- ggplot_obj + geom_text(data=anno,
                                          aes(x=x, y=y, label=labs),
-                                         parse=1-pval_star,
+                                         parse=!pval_star & !plotly,
                                          inherit.aes = FALSE)
   }
   ggplot_obj

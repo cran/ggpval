@@ -1,11 +1,10 @@
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo = FALSE------------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>",
-  fig.path = "inst/image/README-"
+  comment = "#>"
 )
 
-## ----gh-instalqlation, eval = FALSE--------------------------------------
+## ----gh-instalqlation, eval = FALSE-------------------------------------------
 #  # Install `ggpval` from CRAN:
 #  install.packages("ggpval")
 #  
@@ -13,7 +12,7 @@ knitr::opts_chunk$set(
 #  # install.packages("devtools")
 #  devtools::install_github("s6juncheng/ggpval")
 
-## ---- fig.show='hold'----------------------------------------------------
+## ---- message=FALSE-----------------------------------------------------------
 library(ggpval)
 library(data.table)
 library(ggplot2)
@@ -23,21 +22,21 @@ G <- rep(c("G1", "G2"), each = 100)
 dt <- data.table(A, B, G)
 dt <- melt(dt, id.vars = "G")
 
-## ---- echo=TRUE, results='asis'------------------------------------------
+## ---- echo=TRUE---------------------------------------------------------------
 plt <- ggplot(dt, aes(variable, value)) +
   geom_boxplot() +
   geom_jitter()
 
 add_pval(plt, pairs = list(c(1, 2)))
 
-## ---- echo=TRUE, results='asis'------------------------------------------
+## ---- echo=TRUE---------------------------------------------------------------
 plt <- ggplot(dt, aes(variable, value)) +
   geom_boxplot() +
   geom_jitter() +
   facet_wrap(~G)
 add_pval(plt, pairs = list(c(1, 2)))
 
-## ---- echo=TRUE, results='asis'------------------------------------------
+## ---- echo=TRUE---------------------------------------------------------------
 dt[, mu := mean(value),
    by = c("G", "variable")]
 
@@ -52,16 +51,16 @@ plt_bar <- ggplot(dt, aes(x=variable, y=mu, fill = variable)) +
 
 add_pval(plt_bar, pairs = list(c(1, 2)), response = 'value')
 
-## ---- echo=TRUE, results='asis'------------------------------------------
+## ---- echo=TRUE, results='asis'-----------------------------------------------
 add_pval(plt_bar, pairs = list(c(1, 2)), 
          test = 't.test',
-          alternative = "less",
+         alternative = "less",
          response = 'value',
          pval_star = T)
 
-## ---- echo=TRUE, results='asis'------------------------------------------
+## ---- echo=TRUE, results='asis'-----------------------------------------------
 add_pval(plt, pairs = list(c(1, 2)), annotation = "Awesome")
 
-## ---- echo=TRUE, results='asis'------------------------------------------
+## ---- echo=TRUE, results='asis'-----------------------------------------------
 add_pval(plt, pairs = list(c(1, 2)), annotation = list("Awesome1", "Awesome2"))
 
