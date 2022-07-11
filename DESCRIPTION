@@ -1,7 +1,7 @@
 Package: ggpval
 Type: Package
 Title: Annotate Statistical Tests for 'ggplot2'
-Version: 0.2.4
+Version: 0.2.5
 Authors@R: person("Jun", "Cheng", email = "s6juncheng@gmail.com", role = c("aut", "cre"))
 Description: Automatically performs desired statistical tests (e.g. wilcox.test(), t.test()) to compare between groups, 
     and adds the resulting p-values to the plot with an annotation bar.
@@ -14,12 +14,11 @@ License: GPL-3
 Encoding: UTF-8
 Imports: ggplot2, data.table
 Suggests: knitr, rmarkdown, markdown, testthat
-LazyData: true
 VignetteBuilder: knitr
 RoxygenNote: 7.1.1
 NeedsCompilation: no
-Packaged: 2020-11-22 11:05:10 UTC; nle5288
+Packaged: 2022-07-11 16:48:59 UTC; Jun
 Author: Jun Cheng [aut, cre]
 Maintainer: Jun Cheng <s6juncheng@gmail.com>
 Repository: CRAN
-Date/Publication: 2020-11-22 11:20:02 UTC
+Date/Publication: 2022-07-11 17:10:02 UTC

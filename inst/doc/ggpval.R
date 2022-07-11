@@ -27,7 +27,7 @@ plt <- ggplot(dt, aes(variable, value)) +
   geom_boxplot() +
   geom_jitter()
 
-add_pval(plt, pairs = list(c(1, 2)))
+add_pval(plt, pairs = list(c(1, 2)), fold_change=TRUE)
 
 ## ---- echo=TRUE---------------------------------------------------------------
 plt <- ggplot(dt, aes(variable, value)) +
